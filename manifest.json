@@ -1,0 +1,54 @@
+{
+  "id": "rqbit",
+  "name": "rqbit",
+  "version": "0.1.0",
+  "author": "Viboplr",
+  "description": "Download music over BitTorrent with no torrent client to set up: paste a magnet link or .torrent URL and rqbit fetches it straight into one of your collections. Each download is a one-shot run — nothing keeps running in the background.",
+  "minAppVersion": "1.0.71",
+  "stability": "experimental",
+  "homepage": "https://github.com/outcast1000/viboplr-rqbit",
+  "updateUrl": "https://github.com/outcast1000/viboplr-rqbit/releases/latest/download/update.json",
+  "icon": "M12 3v12m0 0l-4-4m4 4l4-4M5 21h14",
+  "binaryDependencies": [
+    {
+      "name": "rqbit",
+      "reason": "The BitTorrent client that performs each download"
+    }
+  ],
+  "apiUsage": [
+    {
+      "api": "system.exec",
+      "reason": "Run rqbit for each download and to list a torrent's files"
+    },
+    {
+      "api": "system.getDependency",
+      "reason": "Check whether rqbit is installed (the app owns installing and updating it)"
+    },
+    {
+      "api": "storage.set",
+      "reason": "Remember which collection downloads land in and your filter preference"
+    },
+    {
+      "api": "collections.resync",
+      "reason": "Rescan the destination collection when a download finishes so the files reach your library"
+    },
+    {
+      "api": "system.openPath",
+      "reason": "Open a finished download's folder"
+    }
+  ],
+  "contributes": {
+    "sidebarItems": [
+      {
+        "id": "rqbit",
+        "label": "Torrents",
+        "icon": "M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"
+      }
+    ],
+    "settingsPanel": {
+      "id": "rqbit-settings",
+      "label": "rqbit",
+      "order": 56
+    }
+  }
+}
