@@ -69,6 +69,7 @@ var jobs = []; // newest first; see startJob for the shape
 var jobSeq = 0;
 var lastRenderAt = 0;
 var renderTimer = null;
+var lastViewHeader = null; // JSON of the last header sent (change gate)
 
 // Settings (persisted).
 var destCollectionId = "";
@@ -276,6 +277,34 @@ function jobStatusText(job, now) {
   if (job.etaSecs != null) parts.push("ETA " + formatEta(job.etaSecs));
   parts.push(job.peersLive + " peer" + (job.peersLive === 1 ? "" : "s"));
   return parts.join(" · ");
+}
+
+// Pure: the host-drawn header over the view (api.ui.setViewHeader). One status
+// word says whether downloads can start; the subtitle says with what and where
+// to. Why it can't start (and what to do) stays in the view's banner.
+// `dep` is rqbitDep, `dest` the destination collection or null, `jobList` the
+// jobs, `canOpen` whether the host can open a folder.
+function viewHeaderFor(dep, dest, jobList, canOpen) {
+  var active = 0;
+  for (var i = 0; i < (jobList || []).length; i++) {
+    var st = jobList[i].state;
+    if (st === "starting" || st === "downloading" || st === "cancelling") active++;
+  }
+  var tagline = "Download music over BitTorrent into your library";
+  if (!dep) return { subtitle: tagline, status: { variant: "muted", label: "Checking…" }, actions: [] };
+  if (dep.hostTooOld) return { subtitle: tagline, status: { variant: "error", label: "Update Viboplr" }, actions: [] };
+  if (!dep.installed) return { subtitle: tagline, status: { variant: "warning", label: "Not installed" }, actions: [] };
+  var parts = ["rqbit " + (dep.version || "installed")];
+  if (dest && dest.path) parts.push("into " + (dest.name || dest.path));
+  if (active) parts.push(active + " downloading");
+  var subtitle = parts.join(" · ");
+  if (!dest || !dest.path) return { subtitle: subtitle, status: { variant: "warning", label: "No destination" }, actions: [] };
+  var actions = canOpen ? [{ label: "Open folder", action: "rqbit:open-dest", variant: "secondary" }] : [];
+  return {
+    subtitle: subtitle,
+    status: active ? { variant: "success", label: "Downloading" } : { variant: "success", label: "Ready" },
+    actions: actions
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -585,6 +614,28 @@ function renderView(force) {
   }
   lastRenderAt = now;
   api.ui.setViewData(VIEW_ID, viewTree(), { scrollKey: "main" });
+  pushViewHeader();
+}
+
+// Sends the header only when it changed: progress re-renders the view about
+// twice a second, and each setViewHeader re-renders the host.
+function pushViewHeader() {
+  if (!api || !api.ui || typeof api.ui.setViewHeader !== "function") return; // host < 1.0.77
+  var canOpen = !!(api.system && typeof api.system.openPath === "function");
+  var header = viewHeaderFor(rqbitDep, collectionById(destCollectionId), jobs, canOpen);
+  var key = JSON.stringify(header);
+  if (key === lastViewHeader) return;
+  lastViewHeader = key;
+  api.ui.setViewHeader(VIEW_ID, header);
+}
+
+function openDestination() {
+  var col = collectionById(destCollectionId);
+  if (!col || !col.path || !api.system || typeof api.system.openPath !== "function") return;
+  api.system.openPath(col.path).catch(function (e) {
+    console.error("rqbit: could not open folder:", e);
+    api.ui.showNotification("rqbit: could not open " + col.path);
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -671,6 +722,7 @@ function registerActions() {
   api.ui.onAction("rqbit:dismiss", function (payload) { dismissJob(payload && payload.id); });
   api.ui.onAction("rqbit:cancel", function (payload) { return cancelJob(payload && payload.id); });
   api.ui.onAction("rqbit:open", function (payload) { openJobFolder(payload && payload.id); });
+  api.ui.onAction("rqbit:open-dest", function () { openDestination(); });
   api.ui.onAction("rqbit:recheck", function () {
     return Promise.all([loadDependency(), loadCollections()]).then(function () { renderSettings(); renderView(true); });
   });
@@ -712,6 +764,7 @@ function deactivate() {
     }
   }
   jobs = [];
+  lastViewHeader = null; // the host drops runtime header state on deactivate
   api = null;
 }
 
@@ -737,6 +790,7 @@ return {
   _formatBytes: formatBytes,
   _formatEta: formatEta,
   _jobStatusText: jobStatusText,
+  _viewHeaderFor: viewHeaderFor,
   _AUDIO_FILE_RE: AUDIO_FILE_RE,
   _RQBIT_GLOBAL_ARGS: RQBIT_GLOBAL_ARGS,
   _STUCK_AFTER_MS: STUCK_AFTER_MS

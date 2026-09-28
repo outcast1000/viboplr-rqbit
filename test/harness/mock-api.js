@@ -18,7 +18,7 @@ function execMatches(entry, cmd, args) {
 
 function makeApi(config) {
   config = config || {};
-  const calls = { exec: [], log: [], setViewData: [], showNotification: [], resync: [], openPath: [], trash: [], cancel: [] };
+  const calls = { exec: [], log: [], setViewData: [], showNotification: [], resync: [], openPath: [], trash: [], cancel: [], setViewHeader: [] };
   const handlers = {};
   const kv = new Map(Object.entries(config.kv || {}));
   const execRules = config.exec || [];
@@ -93,6 +93,10 @@ function makeApi(config) {
       setViewData: (id, data, opts) => { calls.setViewData.push({ id, data, opts }); },
       showNotification: (message) => { calls.showNotification.push(message); },
       navigateToView: () => {},
+      // Hosts >= 1.0.77 only; config.noViewHeader models an older host.
+      ...(config.noViewHeader ? {} : {
+        setViewHeader: (id, header) => { calls.setViewHeader.push({ id, header }); },
+      }),
     },
   };
 
