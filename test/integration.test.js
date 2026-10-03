@@ -42,8 +42,9 @@ test("activate renders the settings panel and the view", async () => {
   const { api } = await activated({});
   assert.ok(api.calls.setViewData.some((c) => c.id === "rqbit-settings"));
   assert.ok(api.calls.setViewData.some((c) => c.id === "rqbit"));
+  await fire(api, "rqbit:tab", { tabId: "downloads" });
   const texts = textsIn(lastView(api, "rqbit"));
-  assert.ok(texts.some((t) => /Choose the collection/.test(t)), "no destination yet → the view says so");
+  assert.ok(texts.some((t) => /Choose the collection/.test(t)), "no destination yet → the Downloads tab says so");
 });
 
 test("a download runs rqbit once, lands, and rescans the destination", async () => {
@@ -191,18 +192,19 @@ test("nothing runs without a destination or without rqbit", async () => {
   assert.ok(noBin.api.calls.showNotification.some((m) => /not installed/.test(m)));
 });
 
-test("garbage in the box is refused before rqbit is touched", async () => {
-  const { api } = await activated({ kv: { settings: { destCollectionId: "7" } } });
+test("text that isn't a torrent source searches instead of touching rqbit", async () => {
+  const { api } = await activated({ kv: { settings: { destCollectionId: "7" } }, fetch: async () => ({ status: 200, body: "[]" }) });
   await fire(api, "rqbit:add", { query: "some album name" });
   assert.equal(api.calls.exec.length, 0);
-  assert.ok(api.calls.showNotification.some((m) => /paste a magnet link/.test(m)));
+  assert.ok(api.calls.fetch.length > 0, "the search sites were asked");
 });
 
 test("settings actions persist and re-render", async () => {
   const { api } = await activated({});
   await fire(api, "rqbit:set-dest", { value: "7" });
   await fire(api, "rqbit:set-audio-only", { checked: false });
-  assert.deepEqual(api.storage._kv.get("settings"), { destCollectionId: "7", audioOnly: false });
+  assert.deepEqual(api.storage._kv.get("settings"), { destCollectionId: "7", audioOnly: false, disabledIndexers: {} });
+  await fire(api, "rqbit:tab", { tabId: "downloads" });
   const texts = textsIn(lastView(api, "rqbit"));
   assert.ok(!texts.some((t) => /Choose the collection/.test(t)), "readiness banner gone once a destination is set");
 });

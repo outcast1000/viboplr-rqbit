@@ -1,16 +1,16 @@
 # viboplr-rqbit
 
-Download music over BitTorrent from inside [Viboplr](https://viboplr.com) with **no torrent
-client to install or configure**. Paste a magnet link or a `.torrent` URL; [rqbit](https://github.com/ikatson/rqbit)
-fetches it straight into one of your collections and the library rescans itself.
+Find and download music over BitTorrent from inside [Viboplr](https://viboplr.com) with **no
+torrent client to install or configure**. Search torrent sites or paste a magnet link; take a
+whole album into one of your collections, or pick single tracks and download them through
+Viboplr's download window. [rqbit](https://github.com/ikatson/rqbit) does the transfer.
 
 Every download is a **one-shot process**: `rqbit download --exit-on-finish` starts, downloads,
 exits. Nothing runs in the background between downloads, nothing seeds afterwards, there is no
 daemon, no WebUI and no API key.
 
-> **Status: scaffold (0.1.0).** The download flow, output parsing and view are implemented and
-> unit-tested against rqbit 9.0.1's real output, but the plugin cannot run against a released
-> Viboplr yet — see [Host requirements](#host-requirements).
+> **Status: experimental (0.3.0), not yet live-tested.** Every flow is unit-tested against rqbit
+> 9.0.1's captured output and saved indexer pages, but has not been run end to end in the app.
 
 ## How it differs from viboplr-qbittorrent
 
@@ -20,7 +20,9 @@ daemon, no WebUI and no API key.
 | Runs | one process per download, exits when done | a resident client you manage |
 | Seeding / ratio | none — the process exits at 100% | yes |
 | Resume after quitting the app | no (start it again; `--overwrite` rehashes what's there) | yes |
-| Torrent list, pause, per-file pick | no (the "Audio files only" filter instead) | yes |
+| Torrent list, pause | no | yes |
+| Per-file pick | yes — *Pick tracks…*, through the download window | yes |
+| Torrent search | the bundled web indexers | the same, plus qBittorrent's own search plugins |
 | Play while downloading | no | yes (sequential + stream) |
 
 They are deliberately **two plugins, not one with two engines**: the shapes share almost nothing,
@@ -30,38 +32,54 @@ tracker, you want the qBittorrent one.
 ## Usage
 
 1. **Settings → Dependencies**: install rqbit (Viboplr downloads the official build).
-2. **Settings → rqbit**: choose the destination collection; leave *Audio files only* on unless
-   you want cover scans and `.nfo` files too.
-3. **Torrents** (sidebar): paste a magnet link or `.torrent` URL and press *Download*. The row
-   shows peers, speed, ETA and a progress bar; when it finishes the collection is rescanned and
-   the album appears in your library.
+2. **Settings → rqbit**: choose the destination collection for whole-torrent downloads; leave
+   *Audio files only* on unless you want cover scans and `.nfo` files too. Turn off any search
+   site that is blocked on your network.
+3. **Torrents** (sidebar) — one box for both:
+   - **Paste a magnet link or `.torrent` URL** → it downloads into `<collection>/<torrent name>/`
+     and the collection is rescanned. Progress (peers, speed, ETA) is on the *Downloads* tab.
+   - **Type an artist or album** → the search sites are asked and the results come back as a
+     sortable table. *Download* takes the whole torrent as above; the result's name (or
+     *Pick tracks…*) lists its files, and *Download…* on a file opens Viboplr's download window
+     for just that file — you choose where it goes, watch it, and can cancel.
+4. **Right-click** a track, album or artist anywhere:
+   - **rqbit: Find torrents…** opens the view already searching *artist + album*.
+   - **rqbit: Download…** (tracks) opens the download window, which then searches the sites,
+     checks up to three likely torrents for the track and fetches only that file.
+5. To make rqbit the downloader for tracks with no source yet (a detail page's
+   "Not in library" rows), move **rqbit (download only)** up in Settings → Providers. That
+   entry never plays anything — it answers every play with "no" at once — it only decides who
+   downloads.
 
-Files land in `<collection>/<torrent name>/`.
+### How a single track is downloaded
 
+The download window's resolve *is* the download (as with yt-dlp): rqbit runs with
+`-r '^<exact file name>$'` into a fresh folder in the plugin's storage, the resolve answers with
+the file's `file://` path, and the window copies it to the destination. The file's own tags
+fill in the metadata. Temp folders are swept before the next download (the last three are kept
+while the window may still be copying) and wiped when the plugin starts. A download that gets no
+peers in 90s, or no new data for 3 minutes, is stopped with a reason; a file listing gives up
+after 45s.
 ## Host requirements
 
-Three host additions carry this plugin. All three are implemented in the Viboplr repo (on
-worktree-2, unreleased at the time of writing); `minAppVersion` in `manifest.json` names the first
-release that ships them. Each is feature-detected, so the plugin degrades rather than breaks on
-an older build:
+`minAppVersion` is **1.0.73**: the menu items use bare labels (*Find torrents…*, *Download…*),
+which that version prefixes with the plugin name. Everything else is feature-detected:
 
-1. **`rqbit` in the dependency registry** (`src-tauri/src/dependencies.rs`) — `--version` →
-   `rqbit X.Y.Z`, managed install from `ikatson/rqbit` (`rqbit-osx-universal` /
-   `rqbit-linux-amd64` / `rqbit-linux-arm64` / `rqbit.exe`; no checksums file upstream, so the
-   install is TLS-only verified). The registry **is** the `api.system.exec` allow-list. Without
-   it nothing runs: the settings panel says so.
-2. **`opts.onStart(handle)` on `api.system.exec`** — a `{ cancel() }` handle for a long run
-   started outside a download resolve, where there is no host Cancel button. This is what the
-   row's *Cancel* button and `deactivate()` use. Without it there is no Cancel, and a magnet with
-   no peers — which hangs rqbit **forever, silently** — runs until the app quits; the view says
-   so after 90s.
-3. **`api.collections.trashPath(collectionId, relativePath)`** — trash something the plugin put
-   inside a local collection, with the root / `..` / symlink checks in Rust. rqbit preallocates
-   every file to full size before the first byte arrives, so a failed or cancelled run leaves
-   files that look complete and would be scanned in as music; the plugin trashes
-   `<collection>/<torrent name>` on failure/cancel (never when rqbit refused to start because
-   the files already existed — those are the user's). Without it, the view warns and offers
-   *Open folder*.
+1. **`rqbit` in the dependency registry** (`src-tauri/src/dependencies.rs`, since 1.0.71) — the
+   registry **is** the `api.system.exec` allow-list. Without it nothing runs.
+2. **`opts.onStart(handle)` on `api.system.exec`** (1.0.71) — the job row's *Cancel*, stopping
+   a dead file listing, and the provider's no-peers / stall stops. Without it a magnet with no
+   peers runs until the app quits.
+3. **`api.collections.trashPath`** (1.0.71) — rqbit preallocates every file to full size, so a
+   failed whole-torrent job trashes `<collection>/<torrent name>` (never when rqbit refused to
+   start because the files already existed). Without it, the view warns and offers *Open folder*.
+4. **`api.downloads.*` + `api.storage.files` + `api.ui.requestAction("download-tracks")`** — the
+   single-track path. `reportProgress` and `readAudioTags` are optional extras.
+
+A host fix that makes the provider's *Cancel* airtight landed with this release (Viboplr
+`usePlugins.ts`): a cancelled resolve now refuses new execs. Before it, cancelling while a
+search-for-a-track was *between* steps (searching sites, say) let the next rqbit run start and
+finish unobserved.
 
 ## rqbit CLI facts
 
@@ -84,6 +102,14 @@ Verified against rqbit **9.0.1** (2026-09-24). The parsers in `index.js` and the
 - `--disable-dht-persistence` is needed for two concurrent downloads (shared DHT state file);
   `--disable-http-api` because `download` otherwise opens an ephemeral HTTP port.
 
+**Assumed, not yet verified against the binary** (the code is written to survive either answer):
+
+- How `-l` names a file in a multi-folder torrent (`CD1/01.flac` or `01.flac`). The provider
+  downloads by basename (`-r`) and then *walks* its temp folder for the file, preferring the copy
+  whose path ends with the listed one, so it doesn't depend on the answer.
+- Whether `-l` prints the `added torrent name=` line. The view and the hunt fall back to the
+  search result's name.
+
 ## Development
 
 ```bash
@@ -99,10 +125,9 @@ download through captured rqbit output. See `RELEASING.md` to cut a release.
 
 ## Roadmap
 
-- **Find torrents…** — port the web-indexer search from viboplr-qbittorrent (its
-  `WEB_DEFS` + `webSearchAll` block is client-agnostic), contributing the context-menu items.
-- **Per-file pick** via `rqbit download -l` before starting (the parser exists: `parseListOutput`).
-- **Assistant tools** (`status`, `download`) once the host cancel handle exists — an assistant
-  must never be able to start something nobody can stop.
-- **Concurrency cap** — downloads currently run in parallel; two at once already works, but a
-  paste-happy session could open many processes.
+- **Assistant tools** (`status`, `search`, `download`) — the cancel handle now exists, so an
+  assistant-started download can be stopped.
+- **Concurrency cap** — downloads run in parallel; two at once works, but a paste-happy session
+  (or a 20-track multi-download) opens that many processes.
+- **Custom search sites** — the definition validator is ported (`validateIndexerDef`); the
+  settings paste box from viboplr-qbittorrent is not.
