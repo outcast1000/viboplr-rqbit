@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.0
+- **Runs in the plugin worker runtime.** It now gets only what it asks for
+  — `network:apibay.org`, `network:nyaa.si`, `network:1337x.to`, `network:bitsearch.eu`, `network:rargb.to`, `exec:rqbit`, `library:read`, `library:write`, `files:read`, `files:trash`, `system:open` — and can't reach anything else in the app. Viboplr asks
+  you to allow these once when you update. Requires Viboplr 1.0.85.
+
 ## v0.3.0
 - **Search.** The Torrents view's box now searches torrent sites (The Pirate Bay, Nyaa, 1337x,
   BitSearch, RARGB — the qBittorrent plugin's web indexers, ported) when what you type isn't a
