@@ -1,5 +1,9 @@
 # Changelog
 
+
+## v0.4.1
+- Releases are now signed with the Viboplr plugin-signing key, so Viboplr allows the permissions this plugin asks for without prompting. No functional changes.
+
 ## v0.4.0
 - **Runs in the plugin worker runtime.** It now gets only what it asks for
   — `network:apibay.org`, `network:nyaa.si`, `network:1337x.to`, `network:bitsearch.eu`, `network:rargb.to`, `exec:rqbit`, `library:read`, `library:write`, `files:read`, `files:trash`, `system:open` — and can't reach anything else in the app. Viboplr asks
