@@ -1,12 +1,37 @@
 {
   "id": "rqbit",
   "name": "rqbit",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": "Viboplr",
   "description": "Find and download music over BitTorrent with no torrent client to set up: search torrent sites, pick single tracks or take whole albums, or paste a magnet link. rqbit fetches each one as a one-shot run — nothing keeps running in the background.",
   "minAppVersion": "1.0.85",
   "runtime": "worker",
-  "permissions": ["network:apibay.org", "network:nyaa.si", "network:1337x.to", "network:bitsearch.eu", "network:rargb.to", "exec:rqbit", "library:read", "library:write", "files:read", "files:trash", "system:open"],
+  "permissions": [
+    "network:apibay.org",
+    "network:nyaa.si",
+    "network:1337x.to",
+    "network:bitsearch.eu",
+    "network:rargb.to",
+    "exec:rqbit",
+    "library:read",
+    "library:write",
+    "files:read",
+    "files:trash",
+    "system:open"
+  ],
+  "permissionReasons": {
+    "network:apibay.org": "Search The Pirate Bay for music torrents",
+    "network:nyaa.si": "Search Nyaa's audio category for music torrents",
+    "network:1337x.to": "Search 1337x's music category for torrents",
+    "network:bitsearch.eu": "Search BitSearch for music torrents",
+    "network:rargb.to": "Search RARGB for music torrents",
+    "exec:rqbit": "Download each torrent, or list its files, in a one-shot rqbit run",
+    "library:read": "List your local collections so you can choose where downloads land",
+    "library:write": "Rescan the destination collection when a download finishes so the files reach your library",
+    "files:read": "Read a downloaded track's title, artist and album from the file instead of guessing from its name",
+    "files:trash": "Remove the partial files a failed or cancelled download leaves in your collection",
+    "system:open": "Open a finished download's folder or your destination collection"
+  },
   "stability": "experimental",
   "homepage": "https://github.com/outcast1000/viboplr-rqbit",
   "updateUrl": "https://github.com/outcast1000/viboplr-rqbit/releases/latest/download/update.json",
@@ -18,52 +43,6 @@
     {
       "name": "rqbit",
       "reason": "The BitTorrent client that performs each download"
-    }
-  ],
-  "apiUsage": [
-    {
-      "api": "system.exec",
-      "reason": "Run rqbit for each download and to list a torrent's files"
-    },
-    {
-      "api": "system.getDependency",
-      "reason": "Check whether rqbit is installed (the app owns installing and updating it)"
-    },
-    {
-      "api": "network.fetch",
-      "reason": "Search torrent websites directly (The Pirate Bay, Nyaa, 1337x, BitSearch, RARGB)"
-    },
-    {
-      "api": "storage.set",
-      "reason": "Remember which collection downloads land in, your filter preference and which search sites are on"
-    },
-    {
-      "api": "storage.files",
-      "reason": "Hold a track rqbit fetched for the download window until it is copied where you chose"
-    },
-    {
-      "api": "downloads.onResolveByUri",
-      "reason": "Download a track you picked from a torrent through the app's download window"
-    },
-    {
-      "api": "downloads.onResolveByMetadata",
-      "reason": "Download a track by finding a torrent that has it"
-    },
-    {
-      "api": "playback.onStreamResolve",
-      "reason": "List rqbit in Settings → Providers so it can be chosen as the downloader for tracks with no source — it never plays anything"
-    },
-    {
-      "api": "system.readAudioTags",
-      "reason": "Read a downloaded track's title, artist and album from the file instead of guessing from its name"
-    },
-    {
-      "api": "collections.resync",
-      "reason": "Rescan the destination collection when a download finishes so the files reach your library"
-    },
-    {
-      "api": "system.openPath",
-      "reason": "Open a finished download's folder"
     }
   ],
   "contributes": {
