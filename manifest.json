@@ -1,7 +1,7 @@
 {
   "id": "rqbit",
   "name": "rqbit",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "author": "Viboplr",
   "description": "Find and download music over BitTorrent with no torrent client to set up: search torrent sites, pick single tracks or take whole albums, or paste a magnet link. rqbit fetches each one as a one-shot run — nothing keeps running in the background.",
   "minAppVersion": "1.0.85",
@@ -42,7 +42,33 @@
   "binaryDependencies": [
     {
       "name": "rqbit",
-      "reason": "The BitTorrent client that performs each download"
+      "reason": "The BitTorrent client that performs each download",
+      "required": true,
+      "definition": {
+        "description": "BitTorrent downloads (one-shot, no client to configure)",
+        "versionArgs": [
+          "--version"
+        ],
+        "versionPattern": "^rqbit (\\S+)",
+        "install": {
+          "macos": "brew install rqbit",
+          "windows": "cargo install rqbit",
+          "linux": "cargo install rqbit",
+          "url": "https://github.com/ikatson/rqbit/releases/latest"
+        },
+        "managed": {
+          "repo": "ikatson/rqbit",
+          "assets": {
+            "macos": "rqbit-osx-universal",
+            "windows": "rqbit.exe",
+            "linux-x64": "rqbit-linux-amd64",
+            "linux-arm64": "rqbit-linux-arm64"
+          },
+          "checksum": {
+            "none": true
+          }
+        }
+      }
     }
   ],
   "contributes": {

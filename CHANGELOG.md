@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.5.0
+- The plugin now tells Viboplr how to install rqbit itself, instead of Viboplr knowing about rqbit. Older Viboplr versions ignore it.
+- rqbit is now marked as required, so Viboplr flags it when it's missing (the plugin can't download anything without it).
+
 ## v0.4.2
 - Each permission now says why the plugin needs it, shown under it when Viboplr asks. No functional changes.
 
