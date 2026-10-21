@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.0
+Needs Viboplr 1.0.113.
+- rqbit downloads are now checked against the checksum GitHub records for each release file, so Viboplr no longer asks you to confirm an unverified download every time you install or update rqbit.
+- Because the source definition changed, a copy Viboplr installed before shows **Reinstall** once in Extensions → Tools.
+- Needs Viboplr 1.0.113: older versions don't know the GitHub checksum and would leave rqbit undefined.
+
 ## v0.5.0
 - The plugin now tells Viboplr how to install rqbit itself, instead of Viboplr knowing about rqbit. Older Viboplr versions ignore it.
 - rqbit is now marked as required, so Viboplr flags it when it's missing (the plugin can't download anything without it).

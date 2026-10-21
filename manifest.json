@@ -1,10 +1,10 @@
 {
   "id": "rqbit",
   "name": "rqbit",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "author": "Viboplr",
   "description": "Find and download music over BitTorrent with no torrent client to set up: search torrent sites, pick single tracks or take whole albums, or paste a magnet link. rqbit fetches each one as a one-shot run — nothing keeps running in the background.",
-  "minAppVersion": "1.0.85",
+  "minAppVersion": "1.0.113",
   "runtime": "worker",
   "permissions": [
     "network:apibay.org",
@@ -65,7 +65,7 @@
             "linux-arm64": "rqbit-linux-arm64"
           },
           "checksum": {
-            "none": true
+            "github": true
           }
         }
       }
