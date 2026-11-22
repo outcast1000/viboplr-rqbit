@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.6.1
+- **Download…** and **Find torrents…** now say which shared action they are, so Viboplr groups them with the other plugins' versions in one menu row each ("Download ▸ …", "Find downloads ▸ …"). Older Viboplr versions show the menu as before.
+
 ## v0.6.0
 Needs Viboplr 1.0.113.
 - rqbit downloads are now checked against the checksum GitHub records for each release file, so Viboplr no longer asks you to confirm an unverified download every time you install or update rqbit.
